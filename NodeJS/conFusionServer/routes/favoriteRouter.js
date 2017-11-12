@@ -23,41 +23,43 @@ favoriteRouter.route('/')
     })
 
     .post(authenticate.verifyUser, (req, res, next) => {
-        Favorites.find({ 'user': req.user._id })
+        Favorites.findOne({ user: req.user._id })
             .then((favorites) => {
-
-                req.body.user = req.user._id;
-                console.log(favorites);
-                
-                if (favorites) {
-                    console.log(favorites);
-                    
-                    if (favorites.dishes.indexOf(req.body._id) == -1) {
-                        favorites.dishes.push(req.body._id);
-                        favorites.save()
-                            .then((favorites) => {
-                                console.log("Successfully added favorite!");
-                                res.json(favorites);
-                            }, (err) => next(err));
-                    } else {
-                        console.log('Favorite is existing!');
-                        res.json(favorites);
-                    }
-
-                } else {
-
-                    Favorites.create({ user: req.body.user })
+                if (!favorites) {
+                    Favorites.create({})
                         .then((favorites) => {
-                            favorites.dishes.push(req.body._id);
+                            console.log(req);                            
+                            console.log(req.dishes);                            
+                            favorites.user = req.user._id;
+                            favorites.dishes = req.body.dishes;
                             favorites.save()
-                                .then((favorites) => {
-                                    console.log('Favorite is existing!');
-                                    res.json(favorites);
-                                }, (err) => next(err));
-                        }, (err) => next(err));
+                                .then((favorite) => {
+                                    res.statusCode = 200;
+                                    res.setHeader('Content-Type', 'application/json');
+                                    res.json(favorite);
+                                })
+                                .catch(err => next(err));
+                        })
+                        .catch(err => next(err));
+                } else {
+                    for (var i = 0; i < req.body.length; i++) {
+                        dishid = req.body[i]._id;
+                        if (favorites.dishes.indexOf(dishid) === -1) {
+                            favorites.dishes.push(dishid);
+                        }
+                    }
+                    favorites.user = req.user._id;
+                    favorites.save()
+                        .then((favorite) => {
+                            res.statusCode = 200;
+                            res.setHeader('Content-Type', 'application/json');
+                            res.json(favorite);
+                        })
+                        .catch(err => next(err));
+
                 }
-            }, (err) => next(err))
-            .catch((err) => next(err));
+            })
+            .catch(err => next(err));
     })
 
     .delete(authenticate.verifyUser, (req, res, next) => {
@@ -75,15 +77,20 @@ favoriteRouter.route('/')
 
 favoriteRouter.route('/:dishId')
     .post(authenticate.verifyUser, (req, res, next) => {
-        Favorites.find({ 'user': req.user._id })
+        Favorites.findOne({ 'user': req.user._id })
             .then((favorites) => {
 
                 req.body.user = req.user._id;
+                console.log(favorites);
 
-                if (favorites) {
-                    if (favorites[0].dishes.indexOf(req.params.dishId) == -1) {
-                        favorites[0].dishes.push(req.params.dishId);
-                        favorites[0].save()
+                if (!favorites) {
+                    console.log(favorites);
+
+                    console.log(favorites);
+
+                    if (favorites.dishes.indexOf(req.params.dishId) == -1) {
+                        favorites.dishes.push(req.params.dishId);
+                        favorites.save()
                             .then((favorites) => {
                                 res.json(favorites);
                             }, (err) => next(err));
@@ -114,17 +121,17 @@ favoriteRouter.route('/:dishId')
 
                 //var favorites = favorites ? favorites[0] : null;
 
-                if (favorites !== null) {
+                if (!favorites) {
                     /*            for (var i = (favorites.dishes.length - 1); i >= 0; i--) {
                                    if (favorites.dishes[i] == req.params.dishId) {
                                        favorites.dishes.remove(req.params.dishId);
                                    }
                                } */
                     if (favorites[0].dishes.indexOf(req.params.dishId) !== -1) {
-                        console.log(favorites[0]);                        
+                        console.log(favorites[0]);
                         favorites[0].dishes.remove(req.params.dishId);
                         console.log(favorites[0]);
-                        
+
                         favorites[0].save()
                             .then((favorites) => {
                                 console.log('Favorite deleted!');
@@ -132,7 +139,7 @@ favoriteRouter.route('/:dishId')
                                 res.setHeader('Content-Type', 'application/json');
                                 res.json(favorites);
                             }, (err) => next(err));
-                    }else {
+                    } else {
                         console.log('Favorite does not exist!');
                         res.json(favorites);
                     }

@@ -1,16 +1,20 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const dishSchema = require('./dishes');
 
 var favoriteSchema = new Schema({
-    user:  {
-        type: String,
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     },
-    dishes:[dishSchema]    
+    dishes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Dish',
+        required: true
+    }]
 }, {
-    timestamps: true
-});
+        timestamps: true
+    });
 
 var Favorites = mongoose.model('Favorite', favoriteSchema);
 

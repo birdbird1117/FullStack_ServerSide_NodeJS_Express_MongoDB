@@ -83,11 +83,10 @@ favoriteRouter.route('/:dishId')
                 req.body.user = req.user._id;
                 console.log(favorites);
 
-                if (!favorites) {
+                if (favorites) {
                     console.log(favorites);
-
-                    console.log(favorites);
-
+                    console.log("dishid:" + req.params.dishId);
+                    
                     if (favorites.dishes.indexOf(req.params.dishId) == -1) {
                         favorites.dishes.push(req.params.dishId);
                         favorites.save()
@@ -103,7 +102,7 @@ favoriteRouter.route('/:dishId')
 
                     Favorites.create({ user: req.body.user })
                         .then((favorites) => {
-                            favorites.dishes.push(req.body._id);
+                            favorites.dishes = req.body.dishes;
                             favorites.save()
                                 .then((favorites) => {
                                     console.log('Favorite exists!');
@@ -116,23 +115,16 @@ favoriteRouter.route('/:dishId')
     })
 
     .delete(authenticate.verifyUser, (req, res, next) => {
-        Favorites.find({ 'user': req.user._id })
+        Favorites.findOne({ 'user': req.user._id })
             .then((favorites) => {
 
-                //var favorites = favorites ? favorites[0] : null;
+                if (favorites) {
+                    if (favorites.dishes.indexOf(req.params.dishId) !== -1) {
+                        console.log(favorites);
+                        favorites.dishes.remove(req.params.dishId);
+                        console.log(favorites);
 
-                if (!favorites) {
-                    /*            for (var i = (favorites.dishes.length - 1); i >= 0; i--) {
-                                   if (favorites.dishes[i] == req.params.dishId) {
-                                       favorites.dishes.remove(req.params.dishId);
-                                   }
-                               } */
-                    if (favorites[0].dishes.indexOf(req.params.dishId) !== -1) {
-                        console.log(favorites[0]);
-                        favorites[0].dishes.remove(req.params.dishId);
-                        console.log(favorites[0]);
-
-                        favorites[0].save()
+                        favorites.save()
                             .then((favorites) => {
                                 console.log('Favorite deleted!');
                                 res.statusCode = 200;
